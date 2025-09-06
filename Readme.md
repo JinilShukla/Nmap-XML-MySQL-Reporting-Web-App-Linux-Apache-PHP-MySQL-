@@ -35,3 +35,44 @@ It uses **cron** to schedule scans and keep the inventory continuously refreshed
 # Linux (Debian/Ubuntu)
 sudo apt-get update
 sudo apt-get install apache2 php libapache2-mod-php mysql-server nmap
+2. Configure MySQL
+sql
+Copy code
+create database nmap;
+use nmap;
+
+create table log(
+    log_id int auto_increment primary key,
+    ip text,
+    mac text,
+    vendor text,
+    hostname text,
+    ports text,
+    timestamp text
+);
+
+create user nmap_user identified by '123456';
+grant all privileges on nmap.* to nmap_user;
+3. Place Files
+Copy nmapParse.php into /var/www/html/
+
+Ensure permissions for web access:
+
+bash
+Copy code
+sudo chown $USER /var/www/html
+sudo chmod 755 /var/www/html
+4. Run Nmap & Parse
+bash
+Copy code
+# Run scan and save XML
+nmap -oX /var/www/html/nmapTest.xml 192.168.1.0/24
+
+# Parse XML and insert into MySQL
+php /var/www/html/nmapParse.php
+5. Automate with Cron
+bash
+Copy code
+crontab -e
+# Example: run every hour
+0 * * * * nmap -oX /var/www/html/nmapTest.xml 192.168.1.0/24 && php /var/www/html/nmapParse.php
